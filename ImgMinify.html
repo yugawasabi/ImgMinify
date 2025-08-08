@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ImgMinify</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+  <style>
+    /* 全体設定 */
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #121212;
+      color: #e0e0e0;
+      padding: 2em;
+      max-width: 600px;
+      margin: auto;
+      line-height: 1.6;
+    }
+
+    h1 {
+      font-weight: 600;
+      font-size: 1.8rem;
+      margin-bottom: 0.5em;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .sub-title {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 0.3em;
+      display: block;
+      color: #b0b0b0;
+    }
+
+    input[type="file"],
+    select,
+    input[type="range"],
+    button {
+      width: 100%;
+      padding: 0.6em 1em;
+      font-size: 1rem;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background-color: #1e1e1e;
+      color: #ffffff;
+      margin-bottom: 1em;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+
+    input[type="file"]::file-selector-button {
+      background-color: #2a2a2a;
+      border: none;
+      padding: 0.5em 1em;
+      color: #e0e0e0;
+      cursor: pointer;
+    }
+
+    input[type="file"]:focus,
+    select:focus,
+    input[type="range"]:focus,
+    button:focus {
+      outline: none;
+      border-color: #ff8c16;
+      box-shadow: 0 0 0 2px rgba(179, 117, 24, 0.5);
+    }
+
+    button {
+      background-color: #ff8c16;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      color: #FFFFFF;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #cc7015;
+    }
+
+    button:disabled {
+      background-color: #444;
+      color: #888;
+      cursor: not-allowed;
+    }
+
+    #qualityValue {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .link-block {
+      margin: 0.5em 0;
+    }
+
+    .link-block a {
+      color: #006eff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .link-block a:hover {
+      text-decoration: underline;
+    }
+
+    #status {
+      margin-top: 1em;
+      font-weight: 600;
+      color: #cccccc;
+    }
+
+    #progressContainer {
+      display: none;
+      margin-top: 1em;
+    }
+
+    #progressBar {
+      height: 8px;
+      width: 100%;
+      background-color: #333;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    #progressInner {
+      height: 100%;
+      width: 0%;
+      background-color: #03da64;
+      transition: width 0.3s ease;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 1em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>ImgMinify</h1>
+  <div class="sub-title">- 画像をまとめて圧縮 -</div>
+  <input type="file" id="fileInput" multiple accept="image/png, image/jpeg, image/webp" />
+
+  <label for="formatSelect">出力形式:</label>
+  <select id="formatSelect">
+    <option value="jpeg">JPG</option>
+    <option value="png">PNG</option>
+    <option value="webp">WebP</option>
+  </select>
+
+  <label for="qualityRange">画質（品質）: <span id="qualityValue">0.95</span></label>
+  <input type="range" id="qualityRange" min="0.1" max="1" step="0.05" value="0.95" />
+
+  <button id="convertButton">変換・圧縮する</button>
+
+  <div id="progressContainer">
+    <div id="progressBar">
+      <div id="progressInner"></div>
+    </div>
+  </div>
+
+  <div id="linkContainer"></div>
+  <button id="zipButton" style="display:none;">すべてZIPで一括ダウンロード</button>
+  <p id="status"></p>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const formatSelect = document.getElementById('formatSelect');
+    const qualityRange = document.getElementById('qualityRange');
+    const qualityValue = document.getElementById('qualityValue');
+    const convertButton = document.getElementById('convertButton');
+    const zipButton = document.getElementById('zipButton');
+    const linkContainer = document.getElementById('linkContainer');
+    const status = document.getElementById('status');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressInner = document.getElementById('progressInner');
+
+    let convertedFiles = [];
+
+    function updateQualityControl() {
+      if (formatSelect.value === 'png') {
+        qualityRange.disabled = true;
+        qualityValue.textContent = '-';
+      } else {
+        qualityRange.disabled = false;
+        qualityValue.textContent = qualityRange.value;
+      }
+    }
+
+    formatSelect.addEventListener('change', updateQualityControl);
+    qualityRange.addEventListener('input', () => {
+      qualityValue.textContent = qualityRange.value;
+    });
+
+    updateQualityControl();
+
+    function convertImage(file, format, quality) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const reader = new FileReader();
+
+        reader.onload = e => {
+          img.src = e.target.result;
+        };
+
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+
+          const ext = format === 'jpeg' ? '.jpg' : '.' + format;
+          const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
+          const fileName = file.name.replace(/\.(png|webp|jpe?g)$/i, ext);
+
+          canvas.toBlob(blob => {
+            resolve({ name: fileName, blob });
+          }, mime, format === 'png' ? 1 : quality);
+        };
+
+        img.onerror = () => {
+          alert(`画像の読み込みに失敗しました: ${file.name}`);
+          resolve(null);
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    convertButton.addEventListener('click', async () => {
+      const files = fileInput.files;
+      if (!files.length) {
+        alert("画像ファイルを選択してください");
+        return;
+      }
+
+      convertedFiles = [];
+      linkContainer.innerHTML = '';
+      status.textContent = '変換・圧縮中...';
+      progressInner.style.width = '0%';
+      progressContainer.style.display = 'block';
+
+      const format = formatSelect.value;
+      const quality = format === 'png' ? 1 : parseFloat(qualityRange.value);
+      let processed = 0;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) {
+          alert(`対応していないファイル形式です: ${file.name}`);
+          continue;
+        }
+
+        const result = await convertImage(file, format, quality);
+        if (!result) continue;
+
+        convertedFiles.push(result);
+
+        const linkBlock = document.createElement('div');
+        linkBlock.className = 'link-block';
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(result.blob);
+        link.download = result.name;
+        link.textContent = `ダウンロード: ${result.name}`;
+        linkBlock.appendChild(link);
+        linkContainer.appendChild(linkBlock);
+
+        processed++;
+        progressInner.style.width = `${((i + 1) / files.length) * 100}%`;
+      }
+
+      if (processed === 0) {
+        status.textContent = '有効な画像がありません。';
+        zipButton.style.display = 'none';
+        progressContainer.style.display = 'none';
+        return;
+      }
+
+      status.textContent = `変換・圧縮完了！${processed}枚の画像が生成されました。`;
+      zipButton.style.display = 'inline-block';
+      progressContainer.style.display = 'none';
+    });
+
+    zipButton.addEventListener('click', () => {
+      if (!convertedFiles.length) return;
+
+      const zip = new JSZip();
+      convertedFiles.forEach(file => {
+        zip.file(file.name, file.blob);
+      });
+
+      zip.generateAsync({ type: 'blob' }).then(content => {
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(content);
+        link.download = 'converted_images.zip';
+        link.click();
+      });
+    });
+  </script>
+</body>
+</html>
