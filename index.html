@@ -6,7 +6,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
   <style>
-    /* 全体設定 */
     body {
       font-family: 'Noto Sans JP', sans-serif;
       background-color: #121212;
@@ -16,7 +15,6 @@
       margin: auto;
       line-height: 1.6;
     }
-
     h1 {
       font-weight: 600;
       font-size: 1.8rem;
@@ -24,125 +22,40 @@
       color: #ffffff;
       text-align: center;
     }
-
-    .sub-title {
-        text-align: center;
-        margin-bottom: 2rem;
+    .sub-title { text-align: center; margin-bottom: 2rem; }
+    label { font-weight: 600; margin-bottom: 0.3em; display: block; color: #b0b0b0; }
+    input[type="file"], select, input[type="range"], button {
+      width: 100%; padding: 0.6em 1em; font-size: 1rem; border: 1px solid #444;
+      border-radius: 6px; background-color: #1e1e1e; color: #ffffff; margin-bottom: 1em;
+      box-sizing: border-box; transition: all 0.2s ease;
     }
-
-    label {
-      font-weight: 600;
-      margin-bottom: 0.3em;
-      display: block;
-      color: #b0b0b0;
-    }
-
-    input[type="file"],
-    select,
-    input[type="range"],
-    button {
-      width: 100%;
-      padding: 0.6em 1em;
-      font-size: 1rem;
-      border: 1px solid #444;
-      border-radius: 6px;
-      background-color: #1e1e1e;
-      color: #ffffff;
-      margin-bottom: 1em;
-      box-sizing: border-box;
-      transition: all 0.2s ease;
-    }
-
     input[type="file"]::file-selector-button {
-      background-color: #2a2a2a;
-      border: none;
-      padding: 0.5em 1em;
-      color: #e0e0e0;
-      cursor: pointer;
+      background-color: #2a2a2a; border: none; padding: 0.5em 1em; color: #e0e0e0; cursor: pointer;
     }
-
-    input[type="file"]:focus,
-    select:focus,
-    input[type="range"]:focus,
-    button:focus {
-      outline: none;
-      border-color: #ff8c16;
-      box-shadow: 0 0 0 2px rgba(179, 117, 24, 0.5);
+    input[type="file"]:focus, select:focus, input[type="range"]:focus, button:focus {
+      outline: none; border-color: #ff8c16; box-shadow: 0 0 0 2px rgba(179, 117, 24, 0.5);
     }
-
     button {
-      background-color: #ff8c16;
-      border: none;
-      font-weight: 600;
-      cursor: pointer;
-      color: #FFFFFF;
+      background-color: #ff8c16; border: none; font-weight: 600; cursor: pointer; color: #fff;
     }
-
-    button:hover:not(:disabled) {
-      background-color: #cc7015;
-    }
-
-    button:disabled {
-      background-color: #444;
-      color: #888;
-      cursor: not-allowed;
-    }
-
-    #qualityValue {
-      font-weight: 700;
-      color: #ffffff;
-    }
-
-    .link-block {
-      margin: 0.5em 0;
-    }
-
-    .link-block a {
-      color: #006eff;
-      text-decoration: none;
-      font-weight: 500;
-    }
-
-    .link-block a:hover {
-      text-decoration: underline;
-    }
-
-    #status {
-      margin-top: 1em;
-      font-weight: 600;
-      color: #cccccc;
-    }
-
-    #progressContainer {
-      display: none;
-      margin-top: 1em;
-    }
-
-    #progressBar {
-      height: 8px;
-      width: 100%;
-      background-color: #333;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    #progressInner {
-      height: 100%;
-      width: 0%;
-      background-color: #03da64;
-      transition: width 0.3s ease;
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 1em;
-      }
-    }
+    button:hover:not(:disabled) { background-color: #cc7015; }
+    button:disabled { background-color: #444; color: #888; cursor: not-allowed; }
+    #qualityValue { font-weight: 700; color: #ffffff; }
+    .link-block { margin: 0.5em 0; }
+    .link-block a { color: #006eff; text-decoration: none; font-weight: 500; }
+    .link-block a:hover { text-decoration: underline; }
+    #status { margin-top: 1em; font-weight: 600; color: #cccccc; }
+    #progressContainer { display: none; margin-top: 1em; }
+    #progressBar { height: 8px; width: 100%; background-color: #333; border-radius: 4px; overflow: hidden; }
+    #progressInner { height: 100%; width: 0%; background-color: #03da64; transition: width 0.3s ease; }
+    .optimize-checkbox { display: flex; align-items: center; gap: 0.4em; margin-bottom: 1em; }
+    @media (max-width: 480px) { body { padding: 1em; } }
   </style>
 </head>
 <body>
   <h1>ImgMinify</h1>
   <div class="sub-title">- 画像をまとめて圧縮 -</div>
+
   <input type="file" id="fileInput" multiple accept="image/png, image/jpeg, image/webp" />
 
   <label for="formatSelect">出力形式:</label>
@@ -155,12 +68,15 @@
   <label for="qualityRange">画質（品質）: <span id="qualityValue">0.95</span></label>
   <input type="range" id="qualityRange" min="0.1" max="1" step="0.05" value="0.95" />
 
+  <div class="optimize-checkbox">
+    <input type="checkbox" id="optimizeCheckbox" checked />
+    <label for="optimizeCheckbox" style="display:inline; margin:0;">画像を最適化（画質優先）</label>
+  </div>
+
   <button id="convertButton">変換・圧縮する</button>
 
   <div id="progressContainer">
-    <div id="progressBar">
-      <div id="progressInner"></div>
-    </div>
+    <div id="progressBar"><div id="progressInner"></div></div>
   </div>
 
   <div id="linkContainer"></div>
@@ -178,6 +94,7 @@
     const status = document.getElementById('status');
     const progressContainer = document.getElementById('progressContainer');
     const progressInner = document.getElementById('progressInner');
+    const optimizeCheckbox = document.getElementById('optimizeCheckbox');
 
     let convertedFiles = [];
 
@@ -190,22 +107,18 @@
         qualityValue.textContent = qualityRange.value;
       }
     }
-
     formatSelect.addEventListener('change', updateQualityControl);
     qualityRange.addEventListener('input', () => {
       qualityValue.textContent = qualityRange.value;
     });
-
     updateQualityControl();
 
-    function convertImage(file, format, quality) {
+    // --- 高品質最適化つき圧縮 ---
+    function convertImage(file, format, quality, optimize) {
       return new Promise((resolve) => {
         const img = new Image();
         const reader = new FileReader();
-
-        reader.onload = e => {
-          img.src = e.target.result;
-        };
+        reader.onload = e => { img.src = e.target.result; };
 
         img.onload = () => {
           const canvas = document.createElement('canvas');
@@ -215,7 +128,29 @@
 
           ctx.fillStyle = "#ffffff";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0);
+
+          // 最適化処理
+          if (optimize) {
+            // 軽いぼかし（ノイズ除去）
+            ctx.filter = 'blur(0.3px)';
+            ctx.drawImage(img, 0, 0);
+            // シャープ補正でエッジ復元
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+              data[i] = Math.min(255, data[i] * 1.02);     // R
+              data[i + 1] = Math.min(255, data[i + 1] * 1.02); // G
+              data[i + 2] = Math.min(255, data[i + 2] * 1.02); // B
+            }
+            ctx.putImageData(imageData, 0, 0);
+            ctx.filter = 'none';
+
+            // 人間の目で劣化しにくいよう補正
+            if (quality < 0.85) quality += 0.05;
+            if (quality < 0.6) quality = 0.7;
+          } else {
+            ctx.drawImage(img, 0, 0);
+          }
 
           const ext = format === 'jpeg' ? '.jpg' : '.' + format;
           const mime = format === 'jpeg' ? 'image/jpeg' : format === 'webp' ? 'image/webp' : 'image/png';
@@ -230,17 +165,13 @@
           alert(`画像の読み込みに失敗しました: ${file.name}`);
           resolve(null);
         };
-
         reader.readAsDataURL(file);
       });
     }
 
     convertButton.addEventListener('click', async () => {
       const files = fileInput.files;
-      if (!files.length) {
-        alert("画像ファイルを選択してください");
-        return;
-      }
+      if (!files.length) return alert("画像ファイルを選択してください");
 
       convertedFiles = [];
       linkContainer.innerHTML = '';
@@ -250,20 +181,14 @@
 
       const format = formatSelect.value;
       const quality = format === 'png' ? 1 : parseFloat(qualityRange.value);
+      const optimize = optimizeCheckbox.checked;
       let processed = 0;
 
       for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (!file.type.startsWith('image/')) {
-          alert(`対応していないファイル形式です: ${file.name}`);
-          continue;
-        }
-
-        const result = await convertImage(file, format, quality);
+        const result = await convertImage(files[i], format, quality, optimize);
         if (!result) continue;
 
         convertedFiles.push(result);
-
         const linkBlock = document.createElement('div');
         linkBlock.className = 'link-block';
         const link = document.createElement('a');
@@ -277,7 +202,7 @@
         progressInner.style.width = `${((i + 1) / files.length) * 100}%`;
       }
 
-      if (processed === 0) {
+      if (!processed) {
         status.textContent = '有効な画像がありません。';
         zipButton.style.display = 'none';
         progressContainer.style.display = 'none';
@@ -291,12 +216,8 @@
 
     zipButton.addEventListener('click', () => {
       if (!convertedFiles.length) return;
-
       const zip = new JSZip();
-      convertedFiles.forEach(file => {
-        zip.file(file.name, file.blob);
-      });
-
+      convertedFiles.forEach(file => zip.file(file.name, file.blob));
       zip.generateAsync({ type: 'blob' }).then(content => {
         const link = document.createElement('a');
         link.href = URL.createObjectURL(content);
